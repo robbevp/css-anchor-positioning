@@ -25,6 +25,7 @@ export function transformCSS(
   styleData: StyleData[],
   inlineStyles?: Map<HTMLElement, Record<string, string>>,
   cleanup = false,
+  leaveLinkStylesheets = false,
 ) {
   const updatedStyleData: StyleData[] = [];
   for (const { el, css, changed, created = false } of styleData) {
@@ -34,6 +35,14 @@ export function transformCSS(
         // Handle inline stylesheets
         el.innerHTML = css;
       } else if (el instanceof HTMLLinkElement) {
+        // Don't create a new style element when they were already applied
+        if (
+          el.parentElement?.querySelector(
+            `style[data-original-href="${el.getAttribute('href')}"]`,
+          )
+        ) {
+          continue;
+        }
         // Replace link elements with style elements.
         // We use inline style elements rather than link elements with blob
         // URLs, as relative URLs for things like images and fonts are not
@@ -55,9 +64,10 @@ export function transformCSS(
           styleEl.setAttribute('data-original-href', el.getAttribute('href')!);
         }
         if (!created) {
-          // This is an existing stylesheet, so we replace it.
-          el.insertAdjacentElement('beforebegin', styleEl);
-          el.remove();
+          // This is an existing stylesheet, so we add the style element and
+          // remove the original unless configured not to.
+          el.insertAdjacentElement('afterend', styleEl);
+          if (!leaveLinkStylesheets) el.remove();
         } else {
           styleEl.setAttribute('data-generated-by-polyfill', 'true');
           // This is a new stylesheet, so we append it.

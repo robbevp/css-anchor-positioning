@@ -559,6 +559,10 @@ export interface AnchorPositioningPolyfillOptions {
   // in the `elements` option will still be polyfilled, but no other elements
   // in the document will be implicitly polyfilled.
   excludeInlineStyles?: boolean;
+
+  // Whether to leave link elements to stylesheet in the DOM when applying the
+  // polyfill
+  leaveLinkStylesheets?: boolean;
 }
 
 function normalizePolyfillOptions(
@@ -594,7 +598,12 @@ export async function polyfill(
   // pre parse CSS styles that we need to cascade
   const cascadeCausedChanges = cascadeCSS(styleData);
   if (cascadeCausedChanges) {
-    styleData = transformCSS(styleData);
+    styleData = transformCSS(
+      styleData,
+      undefined,
+      false,
+      options.leaveLinkStylesheets,
+    );
   }
   // parse CSS
   const { rules, inlineStyles } = await parseCSS(styleData);
