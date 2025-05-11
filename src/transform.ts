@@ -32,6 +32,9 @@ export function transformCSS(
     const updatedObject: StyleData = { el, css, changed: false };
     if (changed) {
       if (el.tagName.toLowerCase() === 'style') {
+        if (el.hasAttribute("data-from-anchor-polyfill")) {
+          continue;
+        }
         // Handle inline stylesheets
         el.innerHTML = css;
       } else if (el instanceof HTMLLinkElement) {
@@ -50,6 +53,7 @@ export function transformCSS(
         // https://github.com/oddbird/css-anchor-positioning/pull/324 for more
         // discussion.
         const styleEl = document.createElement('style');
+        styleEl.setAttribute("data-from-anchor-polyfill", "true");
         styleEl.textContent = css;
         for (const name of el.getAttributeNames()) {
           if (!name.startsWith('on') && !excludeAttributes.includes(name)) {
